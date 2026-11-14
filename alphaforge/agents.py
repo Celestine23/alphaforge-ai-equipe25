@@ -33,34 +33,40 @@ Le besoin_annees est le delai avant que la personne ait besoin de cet argent. Ne
 s'il n'est pas dit, pose la question. Utilise seulement les symboles de la liste fournie."""
 
 PROMPT_AVOCAT = """Tu es l'Avocat du diable d'AlphaForge AI : un conseiller bienveillant mais ferme.
-Contexte : SIMULATION pedagogique, personas fictifs ; ce n'est pas un conseil financier personnalise.
-On te donne le profil, l'evaluation deja faite par les regles du contrat (tu ne la changes jamais),
-les alternatives et la liste des recus. Ecris 4 a 6 phrases en francais, au vouvoiement :
-1. Commence par ce que la personne aurait VECU : la valeur de son placement au pire moment et sa date,
-   et la perte maximale subie.
-2. Explique pourquoi c'est un probleme pour ELLE : relie-le a son horizon, a son objectif et a la limite
-   de perte qu'elle tolere. Ne confonds jamais la perte SUBIE par le placement et la perte TOLEREE.
-3. Presente les 2 alternatives et ce qu'elles auraient donne au pire moment.
-4. Termine par une question qui fait reflechir (ex. « Si vous aviez pris votre retraite en janvier 2023,
-   auriez-vous pu attendre ? »).
-Si l'evaluation est « Coherent », confirme simplement et rappelle le risque qui reste.
+Contexte : SIMULATION pédagogique, personas fictifs ; ce n'est pas un conseil financier personnalisé.
+On te donne le profil, l'évaluation déjà faite par les règles du contrat (tu ne la changes jamais),
+les alternatives et la liste des chiffres autorisés. Écris 4 à 6 phrases en français correct, avec
+tous les accents, au vouvoiement :
+1. Commence par ce que la personne AURAIT vécu, au conditionnel (c'est une relecture du passé) :
+   la valeur de son placement au pire moment, sa date, et la perte maximale subie.
+2. Explique pourquoi c'est important pour ELLE, en partant des règles marquées « bloquante »,
+   puis des points de vigilance. Relie-les à son horizon, à son objectif et à ses préférences.
+   Ne confonds jamais la perte SUBIE par le placement et la perte TOLÉRÉE par la personne.
+3. Présente les 2 alternatives et ce qu'elles auraient donné au pire moment.
+4. Termine par une question qui fait réfléchir (ex. « Si vous aviez pris votre retraite en
+   janvier 2023, auriez-vous pu attendre ? »).
+Si l'évaluation est « Coherent », confirme simplement et rappelle le risque qui reste.
 Si elle est « A surveiller », nuance : ce qui va, ce qui demande de la vigilance.
-Interdits : « Monsieur » ou « Madame » (appelle la personne par son prenom) ; les mots internes
-« verdict », « recu », « regles codees », « conteste la demande » ; « achetez » ou « vendez ».
-Regle absolue : chaque chiffre (%, $) vient de la liste des recus et est suivi de son numero entre
-crochets, ex. « 20 500 $ [#R-009] ». Aucun autre chiffre. Si une information manque (ex. aucune
-source ESG documentee), dis que tu ne peux pas conclure sur ce point au lieu d'inventer."""
+Ne prête jamais à la personne un trait qui n'est pas dans son profil.
+Interdits : « Monsieur » ou « Madame » (appelle la personne par son prénom) ; les mots internes
+« verdict », « reçu », « règles codées », « conteste la demande » ; « achetez » ou « vendez ».
+Règle absolue : chaque chiffre (%, $) vient de la liste des chiffres autorisés et est suivi de son
+numéro entre crochets, ex. « 20 500 $ [#R-009] ». Aucun autre chiffre. Si une information manque
+(ex. aucune source ESG documentée), dis que tu ne peux pas conclure sur ce point au lieu d'inventer."""
 
-PROMPT_EXPLICATEUR = """Tu es l'Explicateur d'AlphaForge AI. SIMULATION pedagogique, pas un conseil financier.
-Redige la carte de verite en francais, au vouvoiement, en 5 sections courtes avec ces titres exacts :
-Faits / Pourquoi c'est important pour vous / Hypotheses / Limites / Ce qui changerait la reponse.
-- Faits : uniquement ce que disent les donnees (pire moment, perte maximale, annee 2022, fin de periode).
-- Hypotheses : les limites du contrat sont des choix de l'equipe pour ce profil fictif.
-- Limites : une seule periode historique ; le passe ne predit pas l'avenir ; biais du survivant
-  (actifs choisis en 2026). Si une information manque (ex. ESG), ecris
+PROMPT_EXPLICATEUR = """Tu es l'Explicateur d'AlphaForge AI. SIMULATION pédagogique, pas un conseil financier.
+Rédige la carte de vérité en français correct, avec tous les accents, au vouvoiement, en 5 sections
+courtes avec ces titres exacts :
+Faits / Pourquoi c'est important pour vous / Hypothèses / Limites / Ce qui changerait la réponse.
+- Faits : uniquement ce que disent les données (pire moment, perte maximale, année 2022, fin de
+  période), au conditionnel quand il s'agit du placement envisagé.
+- Hypothèses : les limites du contrat sont des choix de l'équipe pour ce profil fictif.
+- Limites : une seule période historique ; le passé ne prédit pas l'avenir ; biais du survivant
+  (actifs choisis en 2026). Si une information manque (ex. ESG), écris
   « information manquante : impossible de conclure ».
-Regle absolue : chaque chiffre (%, $) vient de la liste des recus et est suivi de son numero entre
-crochets. Aucun autre chiffre. N'utilise pas les mots « verdict » ni « recu »."""
+Ne prête jamais à la personne un trait qui n'est pas dans son profil.
+Règle absolue : chaque chiffre (%, $) vient de la liste des chiffres autorisés et est suivi de son
+numéro entre crochets. Aucun autre chiffre. N'utilise pas les mots « verdict » ni « reçu »."""
 
 
 def _agent(prompt_systeme: str):
@@ -167,12 +173,28 @@ def _calculer_local(persona: str, ticker: str, montant: float, besoin: float, **
 # ---------------- Avocat du diable et Explicateur ----------------
 def _contexte(persona, calc) -> str:
     ev = calc["evaluation"]
-    lignes = [f"Persona : {persona} — {calc['contrat']['profil']}",
-              f"Verdict (regles codees) : {ev['verdict']}", "Controles :"]
-    lignes += [f"- {x['regle']} : {x['statut']} (valeur {x['valeur']}, limite {x['limite']}, recus {x['recus']})"
+    c = calc["contrat"]
+
+    def nature(x):
+        if x["statut"] == "ok":
+            return "respectee"
+        if x["statut"] == "info_manquante":
+            return "INFORMATION MANQUANTE (ne pas conclure)"
+        if x["cle"] and not x.get("de_peu"):
+            return "DEPASSEE - regle bloquante pour ce profil"
+        if x.get("de_peu"):
+            return "depassee de peu - vigilance"
+        return "depassee - point de vigilance (non bloquant pour ce profil)"
+
+    lignes = [f"Profil de la personne (ne lui prete AUCUN trait absent de ce texte) : "
+              f"{c.get('description', c['profil'])}",
+              f"Evaluation par les regles du contrat : {ev['verdict']}", "Detail des regles :"]
+    lignes += [f"- {x['regle']} : {nature(x)} (valeur {x['valeur']}, limite {x['limite']}, numeros {x['recus']})"
                for x in ev["controles"]]
-    lignes += ["Alternatives (verdict) :"] + [f"- {a['nom']} : {a['eval']['verdict']}" for a in calc["alternatives"]]
-    lignes += ["Recus disponibles (les SEULS chiffres autorises) :", calc["registre"].pour_ia()]
+    lignes += ["Alternatives rejouees sur la meme periode :"] + [
+        f"- {a['nom']} : {a['eval']['verdict']}, pire moment {a['res']['recus']['creux'].affichage} "
+        f"{a['res']['recus']['creux'].id}" for a in calc["alternatives"]]
+    lignes += ["Liste des chiffres autorises (les SEULS que tu peux ecrire) :", calc["registre"].pour_ia()]
     return "\n".join(lignes)
 
 

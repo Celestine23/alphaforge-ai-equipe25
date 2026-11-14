@@ -19,7 +19,8 @@
     "blocs_stables": [
       "ZST.TO",
       "XBB.TO"
-    ]
+    ],
+    "description": "Robert, 59 ans, professionnel de la santé, marié, enfants adultes. Retraite envisagée dans 3 à 5 ans. Expérience avancée. Objectif : préserver son capital tout en gardant un potentiel de croissance. Préfère les entreprises établies et les placements dont il comprend le modèle d'affaires ; tient à la stabilité et à la qualité. Peu intéressé par la crypto. Peut être tenté par une entreprise très médiatisée, même plus risquée que ce qu'il recherche d'habitude."
   },
   "Mateo": {
     "age": 41,
@@ -43,7 +44,8 @@
     "blocs_stables": [
       "XBB.TO",
       "ZST.TO"
-    ]
+    ],
+    "description": "Mateo, 41 ans, gestionnaire des opérations, en couple, deux enfants. Risque modéré, horizon de 8 à 12 ans. Expérience intermédiaire. Objectif : croissance équilibrée. Accorde une grande importance aux facteurs ESG et veut éviter les entreprises liées à des controverses environnementales ou sociales importantes. Ouvert aux technologies émergentes si elles correspondent à son profil ; peu intéressé par les placements hautement spéculatifs."
   },
   "Amira": {
     "age": 26,
@@ -64,6 +66,7 @@
     "blocs_stables": [
       "XBB.TO",
       "GLD"
-    ]
+    ],
+    "description": "Amira, 26 ans, ingénieure logicielle, célibataire. Risque ÉLEVÉ (elle accepte une forte volatilité), horizon de 15 ans et plus. Expérience intermédiaire. Objectif : faire croître son capital à long terme. Très intéressée par l'IA, les technologies émergentes et les cryptoactifs, mais souhaite garder une certaine diversification et éviter de tout miser sur la technologie."
   }
 }
