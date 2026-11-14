@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.pem
+credentials
+.aws/
+lambda.zip
+export_aws/
+traces/*.json
+.DS_Store
+Thumbs.db
