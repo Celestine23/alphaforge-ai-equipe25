@@ -32,23 +32,35 @@ On te donne le profil d'un investisseur fictif et sa demande. Reponds UNIQUEMENT
 Le besoin_annees est le delai avant que la personne ait besoin de cet argent. Ne l'invente jamais :
 s'il n'est pas dit, pose la question. Utilise seulement les symboles de la liste fournie."""
 
-PROMPT_AVOCAT = """Tu es l'Avocat du diable d'AlphaForge AI (SIMULATION, pas un conseil financier).
-Le verdict est DEJA rendu par les regles du contrat : tu ne le changes jamais.
-Ecris 3 a 5 phrases en francais, au vouvoiement, pour la personne : conteste la demande si le verdict
-n'est pas « Coherent », explique pourquoi avec ses propres limites, puis presente les alternatives.
-Regle absolue : chaque chiffre que tu ecris doit venir de la liste des recus et etre suivi de son numero
-entre crochets, ex. « −71 % [#R-002] ». N'ecris aucun autre chiffre. Ne dis jamais « achetez ».
-Si une information manque (ex. aucune source ESG documentee), dis clairement que tu ne peux pas conclure
-sur ce point au lieu d'inventer une justification."""
+PROMPT_AVOCAT = """Tu es l'Avocat du diable d'AlphaForge AI : un conseiller bienveillant mais ferme.
+Contexte : SIMULATION pedagogique, personas fictifs ; ce n'est pas un conseil financier personnalise.
+On te donne le profil, l'evaluation deja faite par les regles du contrat (tu ne la changes jamais),
+les alternatives et la liste des recus. Ecris 4 a 6 phrases en francais, au vouvoiement :
+1. Commence par ce que la personne aurait VECU : la valeur de son placement au pire moment et sa date,
+   et la perte maximale subie.
+2. Explique pourquoi c'est un probleme pour ELLE : relie-le a son horizon, a son objectif et a la limite
+   de perte qu'elle tolere. Ne confonds jamais la perte SUBIE par le placement et la perte TOLEREE.
+3. Presente les 2 alternatives et ce qu'elles auraient donne au pire moment.
+4. Termine par une question qui fait reflechir (ex. « Si vous aviez pris votre retraite en janvier 2023,
+   auriez-vous pu attendre ? »).
+Si l'evaluation est « Coherent », confirme simplement et rappelle le risque qui reste.
+Si elle est « A surveiller », nuance : ce qui va, ce qui demande de la vigilance.
+Interdits : « Monsieur » ou « Madame » (appelle la personne par son prenom) ; les mots internes
+« verdict », « recu », « regles codees », « conteste la demande » ; « achetez » ou « vendez ».
+Regle absolue : chaque chiffre (%, $) vient de la liste des recus et est suivi de son numero entre
+crochets, ex. « 20 500 $ [#R-009] ». Aucun autre chiffre. Si une information manque (ex. aucune
+source ESG documentee), dis que tu ne peux pas conclure sur ce point au lieu d'inventer."""
 
-PROMPT_EXPLICATEUR = """Tu es l'Explicateur d'AlphaForge AI (SIMULATION, pas un conseil financier).
-Redige la carte de verite en francais, en 5 sections courtes avec ces titres exacts :
+PROMPT_EXPLICATEUR = """Tu es l'Explicateur d'AlphaForge AI. SIMULATION pedagogique, pas un conseil financier.
+Redige la carte de verite en francais, au vouvoiement, en 5 sections courtes avec ces titres exacts :
 Faits / Pourquoi c'est important pour vous / Hypotheses / Limites / Ce qui changerait la reponse.
-Regle absolue : chaque chiffre doit venir de la liste des recus, suivi de son numero entre crochets.
-Aucun autre chiffre. Distingue clairement faits (donnees) et hypotheses (contrat de l'equipe).
-Dans Limites, mentionne : une seule periode historique, le passe ne predit pas l'avenir,
-biais du survivant (actifs choisis en 2026). Si une information manque (ex. ESG), ecris
-« information manquante : impossible de conclure » plutot que d'inventer."""
+- Faits : uniquement ce que disent les donnees (pire moment, perte maximale, annee 2022, fin de periode).
+- Hypotheses : les limites du contrat sont des choix de l'equipe pour ce profil fictif.
+- Limites : une seule periode historique ; le passe ne predit pas l'avenir ; biais du survivant
+  (actifs choisis en 2026). Si une information manque (ex. ESG), ecris
+  « information manquante : impossible de conclure ».
+Regle absolue : chaque chiffre (%, $) vient de la liste des recus et est suivi de son numero entre
+crochets. Aucun autre chiffre. N'utilise pas les mots « verdict » ni « recu »."""
 
 
 def _agent(prompt_systeme: str):
@@ -123,6 +135,7 @@ def _calculer_local(persona: str, ticker: str, montant: float, besoin: float, **
     nom = f"{ticker} ({univers().loc[ticker, 'name']})"
     res = rejouer({ticker: 1.0}, montant, besoin, reg, nom)
     ev = evaluer(c, res, montant / c["capital_total"], rc)
+    reg.ajouter("Montant envisage", montant, "$", "demande de la personne", "declare dans la demande", "demande")
     r_poids = reg.ajouter("Poids de ce placement dans votre capital total", montant / c["capital_total"] * 100,
                           "%", f"contrat de {persona}", "montant / capital total fictif", "contrats.json")
     from .verdict import _composition
@@ -195,12 +208,15 @@ def _explicateur_hors_ligne(persona, calc) -> str:
 
 
 MAX_RELANCES = 2
+_NOMBRES = r"(\d+([.,]\d+)?|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|trente)"
+HORIZON_DIT = re.compile(rf"\b{_NOMBRES}\s*(ans?|ann[ée]es?|mois)\b", re.I)
 
 
 def _defauts(v: dict) -> list:
     return ([f"le chiffre « {x} » n'a aucun recu" for x in v["chiffres_sans_recu"]]
             + [f"le recu {x} n'existe pas" for x in v["recus_inconnus"]]
-            + [f"chiffre mal cite : {x}" for x in v.get("chiffres_mal_cites", [])])
+            + [f"chiffre mal cite : {x}" for x in v.get("chiffres_mal_cites", [])]
+            + [f"le chiffre « {x} » n'est pas suivi de son numero de recu" for x in v.get("chiffres_non_cites", [])])
 
 
 def _rediger_sous_garde(nom, prompt, ctx, recus, secours, etape, appel_ia=None) -> str:
@@ -239,6 +255,11 @@ def analyser(persona: str, demande: str, ticker=None, montant=None, besoin=None,
     etape("Intervieweur (IA)" if not HORS_LIGNE else "Intervieweur (hors ligne)", "analyse de la demande", info)
     ticker = ticker or info.get("ticker")
     montant = float(montant or info.get("montant") or 10000)
+    if besoin is None and info.get("besoin_annees") is not None and not HORIZON_DIT.search(demande):
+        # Garde-fou qui EMPECHE : l'IA a fourni un horizon que la personne n'a jamais donne.
+        etape("Garde-fou (code)", "horizon invente par l'IA rejete", {"horizon_propose": info.get("besoin_annees")})
+        info["besoin_annees"] = None
+        info["question"] = "Dans combien de temps pensez-vous avoir besoin de cet argent ?"
     besoin = besoin or info.get("besoin_annees")
     if ticker is None or besoin is None:
         return {"question": info.get("question") or "Pouvez-vous preciser votre demande ?", "trace": trace}

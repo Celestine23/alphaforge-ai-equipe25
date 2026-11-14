@@ -125,8 +125,10 @@ with c2:
     st.caption(f"{len(v['chiffres_verifies'])} chiffres vérifiés")
     relances = sum(1 for e in res["trace"] if "essai" in e["action"] and not e["action"].endswith("essai 1"))
     st.caption(f"Relances de correction par le Vérificateur : {relances}")
-    if v["chiffres_sans_recu"] or v["recus_inconnus"] or v.get("chiffres_mal_cites"):
-        st.error("À corriger : " + ", ".join(v["chiffres_sans_recu"] + v["recus_inconnus"] + v.get("chiffres_mal_cites", [])))
+    a_corriger = (v["chiffres_sans_recu"] + v["recus_inconnus"] + v.get("chiffres_mal_cites", [])
+                  + [f"{x} (non cité)" for x in v.get("chiffres_non_cites", [])])
+    if a_corriger:
+        st.error("À corriger : " + ", ".join(a_corriger))
 
 with st.expander(f"📑 Les {len(reg.recus)} reçus (calcul, source, période, devise)"):
     st.dataframe(pd.DataFrame(reg.en_dicts())[["id", "libelle", "affichage", "periode", "calcul", "sources", "devise"]],

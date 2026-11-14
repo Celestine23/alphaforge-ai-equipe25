@@ -22,6 +22,15 @@ def verifier(texte: str, recus: list) -> dict:
             continue
         if r is not None and abs(x - r.valeur) > max(1.0, abs(r.valeur) * 0.02) and abs(abs(x) - abs(r.valeur)) > 1.0:
             mal_cites.append(f"{m.group(0)}] ≠ {r.affichage}")
+    # 2) Chiffre en % ou $ sans numero de recu juste apres : « non cite ».
+    non_cites = []
+    for m in re.finditer(r"([−-]?\d{1,3}(?:[ \u00a0\u202f]\d{3})+|[−-]?\d+(?:,\d+)?)\s*(%|\$)(?!\s*\[#[RC]-\d{3})", texte):
+        debut = texte[max(0, m.start() - 1):m.start()]
+        if debut.isalnum():
+            continue
+        if re.match(r"\s*[A-Z]{2,6}(\.TO|-USD)?\b", texte[m.end():]):
+            continue  # composition d'une alternative (« 60 % SPY ») : chiffre produit par le code
+        non_cites.append(m.group(0).strip())
     refs = REF.findall(texte)
     refs_inconnues = sorted({r for r in refs if r not in ids})
     propre = REF.sub(" ", texte)
@@ -45,6 +54,8 @@ def verifier(texte: str, recus: list) -> dict:
     score = 100.0 if total == 0 else round(100 * len(trouves) / total, 1)
     if refs_inconnues or mal_cites:
         score = min(score, 50.0)
+    elif non_cites:
+        score = min(score, 90.0)
     return {"score": score, "chiffres_verifies": trouves, "chiffres_sans_recu": orphelins,
             "recus_cites": sorted(set(refs)), "recus_inconnus": refs_inconnues,
-            "chiffres_mal_cites": mal_cites}
+            "chiffres_mal_cites": mal_cites, "chiffres_non_cites": non_cites}
