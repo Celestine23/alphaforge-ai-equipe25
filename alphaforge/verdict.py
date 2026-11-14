@@ -8,6 +8,7 @@ from .recus import Registre
 
 CONTRATS = json.loads((Path(__file__).parent / "contrats.json").read_text(encoding="utf-8"))
 STABLES = {"etf_bond"}
+MARGE_DE_PEU = 0.10  # hypothese de l'equipe : depassement de moins de 10 % = « a surveiller »
 
 
 def contrat(persona: str, **modifs) -> dict:
@@ -45,17 +46,21 @@ def evaluer(c: dict, res: dict, poids_dans_capital: float, rc: dict) -> dict:
     long_terme = c["horizon_annees"] >= 8
     ctl = []
 
-    def ajout(regle, limite, valeur_txt, recus, ok, cle):
+    def ajout(regle, limite, valeur_txt, recus, ok, cle, valeur=None, lim=None):
+        # « De peu » = moins de 10 % au-dela de la limite : a surveiller, pas incoherent.
+        de_peu = (not ok and valeur is not None and lim not in (None, 0)
+                  and abs(valeur - lim) / abs(lim) <= MARGE_DE_PEU)
         ctl.append({"regle": regle, "limite": limite, "valeur": valeur_txt,
-                    "recus": recus, "statut": "ok" if ok else "depasse", "cle": cle})
+                    "recus": recus, "statut": "ok" if ok else "depasse", "cle": cle, "de_peu": de_peu})
 
     ajout("Perte maximale toleree", rc["perte"].affichage, rec["perte_max"].affichage,
           [rec["perte_max"].id, rc["perte"].id], v["perte_max"] >= c["perte_max_toleree_pct"],
-          cle=not long_terme)
+          cle=not long_terme, valeur=v["perte_max"], lim=c["perte_max_toleree_pct"])
     ajout("Volatilite maximale", rc["vol"].affichage, rec["vol"].affichage,
           [rec["vol"].id, rc["vol"].id], v["vol"] <= c["volatilite_max_pct"], cle=False)
-    ajout("Cryptoactifs maximum", rc["crypto"].affichage, f"{comp['crypto']:.0f} %",
-          [rc["crypto"].id], comp["crypto"] <= c["crypto_max_pct"], cle=True)
+    crypto_capital = comp["crypto"] * poids_dans_capital
+    ajout("Cryptoactifs maximum (dans le capital total)", rc["crypto"].affichage, f"{crypto_capital:.0f} %",
+          [rc["crypto"].id], crypto_capital <= c["crypto_max_pct"] + 1e-9, cle=True)
     ajout("Part stable minimale", rc["stable"].affichage, f"{comp['stable']:.0f} %",
           [rc["stable"].id], comp["stable"] >= c["part_stable_min_pct"], cle=False)
     poids_titre = comp["max_titre"] * poids_dans_capital
@@ -73,7 +78,7 @@ def evaluer(c: dict, res: dict, poids_dans_capital: float, rc: dict) -> dict:
                     "valeur": source or "aucune source ESG documentee", "recus": [],
                     "statut": "depasse" if source else "info_manquante", "cle": bool(source)})
 
-    if any(x["statut"] == "depasse" and x["cle"] for x in ctl):
+    if any(x["statut"] == "depasse" and x["cle"] and not x.get("de_peu") for x in ctl):
         verdict = "Incoherent"
     elif any(x["statut"] in ("depasse", "info_manquante") for x in ctl):
         verdict = "A surveiller"

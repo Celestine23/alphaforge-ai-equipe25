@@ -127,8 +127,9 @@ def _calculer_local(persona: str, ticker: str, montant: float, besoin: float, **
                           "%", f"contrat de {persona}", "montant / capital total fictif", "contrats.json")
     from .verdict import _composition
     comp = _composition(res["poids"])
-    r_crypto = reg.ajouter("Part de cryptoactifs de ce placement", comp["crypto"], "%", "composition",
-                           "classe d'actif (assets_universe.csv)", "assets_universe.csv")
+    r_crypto = reg.ajouter("Part de cryptoactifs dans votre capital total",
+                           comp["crypto"] * montant / c["capital_total"], "%", f"contrat de {persona}",
+                           "part crypto du placement × montant / capital total", "assets_universe.csv ; contrats.json")
     r_stable = reg.ajouter("Part stable (obligations) de ce placement", comp["stable"], "%", "composition",
                            "classe d'actif (assets_universe.csv)", "assets_universe.csv")
     for ctl in ev["controles"]:
