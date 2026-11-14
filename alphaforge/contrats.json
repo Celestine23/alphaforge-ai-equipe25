@@ -1,0 +1,69 @@
+{
+  "_note": "Seuils = HYPOTHESES de l'equipe (a valider par l'analyste finance). Montants fictifs, en CAD.",
+  "Robert": {
+    "age": 59,
+    "profil": "Risque faible a modere, retraite dans 3 a 5 ans",
+    "capital_total": 400000,
+    "horizon_annees": 4,
+    "perte_max_toleree_pct": -15,
+    "volatilite_max_pct": 12,
+    "poids_max_titre_pct": 10,
+    "poids_max_secteur_pct": 30,
+    "crypto_max_pct": 0,
+    "part_stable_min_pct": 40,
+    "exclusions_secteurs": [],
+    "blocs_coeur": [
+      "XIU.TO",
+      "SPY"
+    ],
+    "blocs_stables": [
+      "ZST.TO",
+      "XBB.TO"
+    ]
+  },
+  "Mateo": {
+    "age": 41,
+    "profil": "Risque modere, 8 a 12 ans, preferences ESG",
+    "capital_total": 200000,
+    "horizon_annees": 10,
+    "perte_max_toleree_pct": -25,
+    "volatilite_max_pct": 18,
+    "poids_max_titre_pct": 15,
+    "poids_max_secteur_pct": 35,
+    "crypto_max_pct": 2,
+    "part_stable_min_pct": 25,
+    "exclusions_secteurs": [
+      "Energy"
+    ],
+    "exclusions_sources": {},
+    "blocs_coeur": [
+      "ESGV",
+      "XIU.TO"
+    ],
+    "blocs_stables": [
+      "XBB.TO",
+      "ZST.TO"
+    ]
+  },
+  "Amira": {
+    "age": 26,
+    "profil": "Risque eleve, 15 ans et plus, technologies et crypto",
+    "capital_total": 100000,
+    "horizon_annees": 15,
+    "perte_max_toleree_pct": -40,
+    "volatilite_max_pct": 30,
+    "poids_max_titre_pct": 20,
+    "poids_max_secteur_pct": 45,
+    "crypto_max_pct": 10,
+    "part_stable_min_pct": 0,
+    "exclusions_secteurs": [],
+    "blocs_coeur": [
+      "SPY",
+      "XIU.TO"
+    ],
+    "blocs_stables": [
+      "XBB.TO",
+      "GLD"
+    ]
+  }
+}
