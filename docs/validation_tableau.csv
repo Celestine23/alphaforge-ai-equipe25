@@ -1,0 +1,19 @@
+actif,chiffre,recalcul manuel (%),reçu (%),écart,verdict
+TSLA,Volatilité annuelle,58.79,58.79,0.0,VALIDÉ
+TSLA,Perte maximale,-70.88,-70.88,0.0,VALIDÉ
+TSLA,Résultat 2022,-62.64,-62.64,0.0,VALIDÉ
+SPY,Volatilité annuelle,16.65,16.65,0.0,VALIDÉ
+SPY,Perte maximale,-22.25,-22.25,0.0,VALIDÉ
+SPY,Résultat 2022,-12.59,-12.59,0.0,VALIDÉ
+XIU.TO,Volatilité annuelle,13.07,13.07,0.0,VALIDÉ
+XIU.TO,Perte maximale,-16.36,-16.36,0.0,VALIDÉ
+XIU.TO,Résultat 2022,-6.35,-6.35,0.0,VALIDÉ
+ZST.TO,Volatilité annuelle,0.56,0.56,0.0,VALIDÉ
+ZST.TO,Perte maximale,-0.43,-0.43,0.0,VALIDÉ
+ZST.TO,Résultat 2022,1.22,1.22,0.0,VALIDÉ
+BTC-USD,Volatilité annuelle,50.28,50.28,0.0,VALIDÉ
+BTC-USD,Perte maximale,-74.18,-74.18,0.0,VALIDÉ
+BTC-USD,Résultat 2022,-61.82,-61.82,0.0,VALIDÉ
+XOM,Volatilité annuelle,26.02,26.02,0.0,VALIDÉ
+XOM,Perte maximale,-19.08,-19.08,0.0,VALIDÉ
+XOM,Résultat 2022,100.21,100.21,0.0,VALIDÉ
