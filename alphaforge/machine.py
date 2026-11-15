@@ -87,32 +87,32 @@ def rejouer(poids: dict, montant: float, besoin_annees: float, reg: Registre,
     res = {"nom": nom, "poids": poids, "montant": montant, "serie": v,
            "date_creux": creux_date, "date_besoin": date_besoin, "recus": {}}
     add = lambda cle, *a: res["recus"].__setitem__(cle, reg.ajouter(*a))
-    add("vol", f"Volatilite annuelle — {nom}", vol, "%", periode,
+    add("vol", f"Volatilité annuelle — {nom}", vol, "%", periode,
         f"ecart-type des rendements journaliers (log) × √{n_an}", src)
     add("perte_max", f"Perte maximale (sommet → creux) — {nom}", perte_max, "%", periode,
         "minimum de (valeur / plus haut precedent − 1)", src)
     add("creux", f"Valeur au pire moment ({creux_date.date()}) — {nom}", creux, "$", periode,
         f"{fmt_nombre(montant)} $ × prix au creux / prix de depart", src)
-    add("an2022", f"Resultat sur l'annee 2022 — {nom}", an_2022, "%", "2021-12-31 → 2022-12-31",
+    add("an2022", f"Résultat sur l'année 2022 — {nom}", an_2022, "%", "2021-12-31 → 2022-12-31",
         "valeur fin 2022 / valeur fin 2021 − 1", src)
-    add("fin", f"Valeur en fin de periode — {nom}", v.iloc[-1], "$", periode,
+    add("fin", f"Valeur en fin de période — {nom}", v.iloc[-1], "$", periode,
         "montant × prix final / prix de depart", src)
     if mois_recup is not None:
-        add("recup", f"Temps pour revenir au montant investi apres le creux — {nom}", mois_recup,
+        add("recup", f"Temps pour revenir au montant investi après le creux — {nom}", mois_recup,
             "mois", periode, "premiere date ou valeur ≥ montant investi, apres le creux", src)
     if val_besoin is not None:
-        add("besoin", f"Valeur a la date du besoin ({date_besoin.date()}) — {nom}", val_besoin, "$",
+        add("besoin", f"Valeur à la date du besoin ({date_besoin.date()}) — {nom}", val_besoin, "$",
             periode, f"valeur {besoin_annees:g} ans apres le depart", src)
     # Plusieurs dates d'entree : fenetres glissantes (horizon plafonne a 3 ans faute d'historique)
     h = min(besoin_annees, 3)
     pas = int(h * n_an)
     rend = (v.shift(-pas) / v - 1).dropna().iloc[::21] * 100
     if len(rend) > 5:
-        add("fen_duree", f"Duree des periodes testees (plafonnee faute d'historique) — {nom}", h, "ans",
+        add("fen_duree", f"Durée des périodes testées (plafonnée faute d'historique) — {nom}", h, "ans",
             periode, "min(horizon du besoin, 3 ans)", "choix de methode de l'equipe")
-        add("fen_perte", f"Part des dates d'entree en perte apres {h:g} ans — {nom}",
+        add("fen_perte", f"Part des dates d'entrée en perte après {h:g} ans — {nom}",
             (rend < 0).mean() * 100, "%", periode, f"{len(rend)} dates d'entree mensuelles", src)
-        add("fen_pire", f"Pire resultat apres {h:g} ans, toutes dates d'entree — {nom}",
+        add("fen_pire", f"Pire résultat après {h:g} ans, toutes dates d'entrée — {nom}",
             rend.min(), "%", periode, f"{len(rend)} dates d'entree mensuelles", src)
     res["valeurs"] = {k: r.valeur for k, r in res["recus"].items()}
     return res
