@@ -31,7 +31,7 @@
     "volatilite_max_pct": 18,
     "poids_max_titre_pct": 15,
     "poids_max_secteur_pct": 35,
-    "crypto_max_pct": 2,
+    "crypto_max_pct": 0,
     "part_stable_min_pct": 25,
     "exclusions_secteurs": [
       "Energy"
