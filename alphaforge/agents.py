@@ -48,9 +48,11 @@ tous les accents, au vouvoiement :
 Si l'évaluation est « Coherent », confirme simplement et rappelle le risque qui reste.
 Si elle est « A surveiller », nuance : ce qui va, ce qui demande de la vigilance.
 Ne prête jamais à la personne un trait qui n'est pas dans son profil.
+Les chiffres de la description du profil (âge, fourchette d'horizon comme « 8 à 12 ans ») ne sont PAS
+autorisés : pour l'horizon, utilise uniquement l'horizon déclaré, avec son numéro. Pour une absence,
+écris-la en mots (« aucune part en obligations ») plutôt que « 0 % ».
 Interdits : « Monsieur » ou « Madame » (appelle la personne par son prénom) ; les mots internes
 « verdict », « reçu », « règles codées », « conteste la demande » ; « achetez » ou « vendez ».
-N'emploie jamais les étiquettes « règle bloquante » ni « point de vigilance » : dis-le avec tes mots.
 Règle absolue : chaque chiffre (%, $) vient de la liste des chiffres autorisés et est suivi de son
 numéro entre crochets, ex. « 20 500 $ [#R-009] ». Aucun autre chiffre. Si une information manque
 (ex. aucune source ESG documentée), dis que tu ne peux pas conclure sur ce point au lieu d'inventer."""
@@ -66,6 +68,9 @@ Faits / Pourquoi c'est important pour vous / Hypothèses / Limites / Ce qui chan
   (actifs choisis en 2026). Si une information manque (ex. ESG), écris
   « information manquante : impossible de conclure ».
 Ne prête jamais à la personne un trait qui n'est pas dans son profil.
+Les chiffres de la description du profil (âge, fourchette d'horizon comme « 8 à 12 ans ») ne sont PAS
+autorisés : pour l'horizon, utilise uniquement l'horizon déclaré, avec son numéro. Pour une absence,
+écris-la en mots (« aucune part en obligations ») plutôt que « 0 % ».
 Règle absolue : chaque chiffre (%, $) vient de la liste des chiffres autorisés et est suivi de son
 numéro entre crochets. Aucun autre chiffre. N'utilise pas les mots « verdict » ni « reçu »."""
 
@@ -142,7 +147,7 @@ def _calculer_local(persona: str, ticker: str, montant: float, besoin: float, **
     nom = f"{ticker} ({univers().loc[ticker, 'name']})"
     res = rejouer({ticker: 1.0}, montant, besoin, reg, nom)
     ev = evaluer(c, res, montant / c["capital_total"], rc)
-    reg.ajouter("Montant envisage", montant, "$", "demande de la personne", "declare dans la demande", "demande")
+    reg.ajouter("Montant envisagé", montant, "$", "demande de la personne", "declare dans la demande", "demande")
     r_poids = reg.ajouter("Poids de ce placement dans votre capital total", montant / c["capital_total"] * 100,
                           "%", f"contrat de {persona}", "montant / capital total fictif", "contrats.json")
     from .verdict import _composition
@@ -199,34 +204,71 @@ def _contexte(persona, calc) -> str:
     return "\n".join(lignes)
 
 
+_MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
+         "septembre", "octobre", "novembre", "décembre"]
+_VERDICT_FR = {"Coherent": "cohérent", "A surveiller": "à surveiller", "Incoherent": "incohérent"}
+
+
+def _date_fr(d) -> str:
+    jour = "1er" if d.day == 1 else str(d.day)
+    return f"{jour} {_MOIS[d.month - 1]} {d.year}"
+
+
+def _phrase_controle(x) -> str:
+    r = x["recus"]
+    v = f"{x['valeur']} [{r[0]}]" if len(r) >= 2 else x["valeur"]
+    lim = f"{x['limite']} [{r[-1]}]" if r else x["limite"]
+    regle = x["regle"]
+    if x["statut"] == "info_manquante":
+        return ("information manquante : aucune source ESG publique n'est documentée pour ce secteur, "
+                "il est donc impossible de conclure sur ce point")
+    if regle.startswith("Perte maximale"):
+        return f"la perte maximale aurait atteint {v}, alors que votre limite est de {lim}"
+    if regle.startswith("Volatilite"):
+        return f"la volatilité annuelle serait de {v}, au-delà de votre limite de {lim}"
+    if regle.startswith("Part stable"):
+        return f"la part placée en obligations serait de {v}, alors que votre profil en demande au moins {lim}"
+    if regle.startswith("Poids maximal"):
+        return f"ce placement représenterait {v} de votre capital, au-delà de la limite de {lim} pour un seul titre"
+    if regle.startswith("Cryptoactifs"):
+        return f"la part de cryptoactifs atteindrait {v} de votre capital, au-delà de votre plafond de {lim}"
+    if regle.startswith("Temps de recuperation"):
+        return f"il aurait fallu {v} pour revenir au montant investi, ce qui ne cadre pas avec votre horizon"
+    return f"{regle.lower()} : {v} (limite {lim})"
+
+
 def _avocat_hors_ligne(persona, calc) -> str:
-    rc = calc["principal"]["recus"]
+    p = calc["principal"]
+    rc = p["recus"]
     ev = calc["evaluation"]
+    montant = next((r for r in calc["registre"].recus if r.libelle == "Montant envisagé"), None)
+    depart = f"{montant.affichage} [{montant.id}]" if montant else "votre montant"
+    txt = (f"{persona}, si vous aviez placé {depart} au départ, votre placement aurait valu "
+           f"{rc['creux'].affichage} [{rc['creux'].id}] au pire moment, le {_date_fr(p['date_creux'])}. ")
     dep = [x for x in ev["controles"] if x["statut"] != "ok"]
-    txt = f"Verdict : {ev['verdict']}. "
     if dep:
-        def phrase(x):
-            r = x["recus"]
-            if len(r) >= 2:
-                return f"{x['regle'].lower()} : {x['valeur']} [{r[0]}] pour une limite de {x['limite']} [{r[-1]}]"
-            return f"{x['regle'].lower()} : {x['valeur']} ({x['limite']})"
-        txt += "Ce placement ne respecte pas votre contrat sur ces points : " + "; ".join(phrase(x) for x in dep) + ". "
-    txt += f"Au pire moment, votre placement aurait valu {rc['creux'].affichage} [{rc['creux'].id}]. "
+        txt += "Pour votre profil, ce placement est jugé " + _VERDICT_FR[ev["verdict"]] + " : " + " ; ".join(
+            _phrase_controle(x) for x in dep) + ". "
+    else:
+        txt += "Ce placement respecte les limites de votre profil ; le risque de baisse reste réel. "
     if calc["alternatives"]:
-        txt += "Deux alternatives conformes ont ete rejouees sur la meme periode : " + "; ".join(
-            f"{a['nom']} (pire moment {a['res']['recus']['creux'].affichage} [{a['res']['recus']['creux'].id}])"
-            for a in calc["alternatives"]) + "."
+        txt += "Deux répartitions conformes à votre profil, rejouées sur la même période : " + " ; ".join(
+            f"{a['nom'].split(' : ', 1)[-1]}, qui aurait valu {a['res']['recus']['creux'].affichage} "
+            f"[{a['res']['recus']['creux'].id}] au pire moment" for a in calc["alternatives"]) + "."
     return txt
 
 
 def _explicateur_hors_ligne(persona, calc) -> str:
     rc = calc["principal"]["recus"]
-    lignes = ["**Faits.** " + " ".join(f"{r.libelle} : {r.affichage} [{r.id}]." for r in rc.values())]
-    lignes.append(f"**Pourquoi c'est important pour vous.** Verdict : {calc['evaluation']['verdict']}.")
-    lignes.append("**Hypotheses.** Les limites du contrat sont des hypotheses de l'equipe pour ce profil fictif.")
-    lignes.append("**Limites.** Une seule periode historique ; le passe ne predit pas l'avenir ; "
+    cles = [k for k in ("creux", "perte_max", "an2022", "fin", "recup", "besoin") if k in rc]
+    lignes = ["**Faits.** " + " ".join(f"{rc[k].libelle.split(' — ')[0]} : {rc[k].affichage} [{rc[k].id}]."
+                                         for k in cles)]
+    lignes.append(f"**Pourquoi c'est important pour vous.** Pour votre profil, ce placement est jugé "
+                  f"{_VERDICT_FR[calc['evaluation']['verdict']]}, d'après les limites de votre contrat.")
+    lignes.append("**Hypothèses.** Les limites du contrat sont des hypothèses de l'équipe pour ce profil fictif.")
+    lignes.append("**Limites.** Une seule période historique ; le passé ne prédit pas l'avenir ; "
                   "biais du survivant (actifs choisis en 2026).")
-    lignes.append("**Ce qui changerait la reponse.** Un horizon plus long ou une part plus petite de ce placement.")
+    lignes.append("**Ce qui changerait la réponse.** Un horizon plus long, ou une part plus petite de ce placement.")
     return "\n\n".join(lignes)
 
 
@@ -265,7 +307,7 @@ def _rediger_sous_garde(nom, prompt, ctx, recus, secours, etape, appel_ia=None) 
                    + "\n- ".join(defauts) + "\nNe les reproduis pas. Reecris le texte complet.")
     txt = secours()
     etape(f"{nom} (secours, code)", "texte refuse apres relances : texte genere par le code affiche", txt[:200])
-    return "*Texte de secours genere par le code (le texte de l'IA a ete bloque par le Verificateur).*\n\n" + txt
+    return "*Texte de secours généré par le code : le texte de l'IA a été bloqué par le Vérificateur.*\n\n" + txt
 
 
 def analyser(persona: str, demande: str, ticker=None, montant=None, besoin=None, **modifs) -> dict:

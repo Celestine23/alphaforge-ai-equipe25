@@ -28,6 +28,11 @@ def verifier(texte: str, recus: list) -> dict:
         debut = texte[max(0, m.start() - 1):m.start()]
         if debut.isalnum():
             continue
+        try:
+            if _num(m.group(1)) == 0:
+                continue  # « 0 % » : une absence, pas une donnee a sourcer
+        except ValueError:
+            pass
         if re.match(r"\s*[A-Z]{2,6}(\.TO|-USD)?\b", texte[m.end():]):
             continue  # composition d'une alternative (« 60 % SPY ») : chiffre produit par le code
         non_cites.append(m.group(0).strip())

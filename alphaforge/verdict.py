@@ -22,8 +22,8 @@ def recus_contrat(c: dict, persona: str, reg: Registre) -> dict:
     p = f"contrat de {persona}"
     return {
         "horizon": reg.ajouter("Horizon du besoin d'argent", c["horizon_annees"], "ans", p, "declare", src),
-        "perte": reg.ajouter("Perte toleree", c["perte_max_toleree_pct"], "%", p, "hypothese", src),
-        "vol": reg.ajouter("Volatilite maximale", c["volatilite_max_pct"], "%", p, "hypothese", src),
+        "perte": reg.ajouter("Perte tolérée", c["perte_max_toleree_pct"], "%", p, "hypothese", src),
+        "vol": reg.ajouter("Volatilité maximale", c["volatilite_max_pct"], "%", p, "hypothese", src),
         "poids": reg.ajouter("Poids maximal d'un seul titre", c["poids_max_titre_pct"], "%", p, "hypothese", src),
         "crypto": reg.ajouter("Cryptoactifs maximum", c["crypto_max_pct"], "%", p, "hypothese", src),
         "stable": reg.ajouter("Part stable minimale", c["part_stable_min_pct"], "%", p, "hypothese", src),
