@@ -53,6 +53,7 @@ autorisés : pour l'horizon, utilise uniquement l'horizon déclaré, avec son nu
 écris-la en mots (« aucune part en obligations ») plutôt que « 0 % ».
 Interdits : « Monsieur » ou « Madame » (appelle la personne par son prénom) ; les mots internes
 « verdict », « reçu », « règles codées », « conteste la demande » ; « achetez » ou « vendez ».
+N'emploie jamais les étiquettes « règle bloquante » ni « point de vigilance » : dis-le avec tes mots.
 Règle absolue : chaque chiffre (%, $) vient de la liste des chiffres autorisés et est suivi de son
 numéro entre crochets, ex. « 20 500 $ [#R-009] ». Aucun autre chiffre. Si une information manque
 (ex. aucune source ESG documentée), dis que tu ne peux pas conclure sur ce point au lieu d'inventer."""
@@ -72,7 +73,7 @@ Les chiffres de la description du profil (âge, fourchette d'horizon comme « 8 
 autorisés : pour l'horizon, utilise uniquement l'horizon déclaré, avec son numéro. Pour une absence,
 écris-la en mots (« aucune part en obligations ») plutôt que « 0 % ».
 Règle absolue : chaque chiffre (%, $) vient de la liste des chiffres autorisés et est suivi de son
-numéro entre crochets. Aucun autre chiffre. N'utilise pas les mots « verdict » ni « reçu »."""
+numéro entre crochets. Aucun autre chiffre. N'utilise pas les mots « verdict », « reçu », « règle bloquante » ni « point de vigilance »."""
 
 
 def _agent(prompt_systeme: str):
