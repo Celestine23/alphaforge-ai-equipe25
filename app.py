@@ -403,6 +403,13 @@ if etat.get("persona") != cle_profil:
 PLACEMENTS = liste_placements()
 NOM_DE = {t: lib.split(" — ", 1)[-1] for lib, t in PLACEMENTS}
 NOM_PHRASE = {t: NOMS_SIMPLES.get(t, n) for t, n in NOM_DE.items()}  # sans majuscule, pour une phrase
+
+
+def libelle_liste(t: str) -> str:
+    """« ESGV : Un fonds américain qui exclut… » — l'abréviation d'abord, puis sa définition."""
+    abrev = t.split(".")[0].split("-")[0]
+    definition = re.sub(r"\s*\([^)]*\)\s*$", "", NOM_DE.get(t, t))
+    return f"{abrev} : {definition}"
 exemple = argent(min(60_000, c["capital_total"] * 0.3))
 
 
@@ -465,7 +472,7 @@ with st.expander("🔎 Choisir un placement" + ("" if not res else " (essayer un
     with st.form("choix_direct", border=False):
         options = [EXPLORER] + [t for _, t in PLACEMENTS]
         choix_t = st.selectbox("Dans quoi voulez-vous placer votre argent ?", options,
-                               format_func=lambda t: t if t == EXPLORER else NOM_DE.get(t, t))
+                               format_func=lambda t: t if t == EXPLORER else libelle_liste(t))
         cc1, cc2 = st.columns(2)
         montant_d = cc1.number_input("Montant ($ CA)", 1000, 5_000_000,
                                      int(min(60_000, c["capital_total"] * 0.3)), step=1000)

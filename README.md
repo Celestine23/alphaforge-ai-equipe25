@@ -3,13 +3,17 @@
 **Datathon PolyFinances 2026 · Banque Nationale × AWS**
 Simulation uniquement : personas fictifs, aucune transaction, aucun conseil financier personnalisé.
 
+- **Application en ligne :** LIEN_A_REMPLACER
+- **Dépôt GitHub :** https://github.com/Celestine23/alphaforge-ai-equipe25
+- **Installer et lancer en local :** voir la section [Installation](#installation) ci-dessous.
+
 L'assistant fait **vivre** à l'investisseur ce que son placement lui aurait fait traverser (relecture des données 2021-2026, en CAD), **conteste** quand le placement ne respecte pas son contrat d'investisseur, et **prouve** chaque chiffre avec un reçu numéroté (#R-001…) contrôlé par un Vérificateur.
 
 ## Ce que voit l'utilisateur
 
 1. **Il choisit un profil** dans la barre latérale : Robert, Mateo ou Amira (les personas du défi), ou **« ➕ Mon profil »** pour décrire un profil fictif en quelques questions simples (horizon, perte acceptée, épargne, préférences ESG et crypto). L'application en déduit un profil prudent, équilibré ou audacieux.
 2. **Il dit ce qu'il veut faire**, de deux façons au choix :
-   - **« 🔎 Choisir un placement »** : une liste des 31 placements des données, avec des noms compréhensibles, plus le montant et l'horizon, puis « Voir le résultat » ; aucune phrase à écrire ;
+   - **« 🔎 Choisir un placement »** : une liste des 31 placements des données (le symbole, puis une description simple : « ESGV : Un fonds américain qui exclut les entreprises controversées »), plus le montant et l'horizon, puis « Voir le résultat » ; aucune phrase à écrire ;
    - **la conversation**, en langage courant, par exemple : *« Je veux mettre 60 000 $ dans Tesla, j'en aurai besoin dans 4 ans. »* S'il manque une information (l'horizon, par exemple), l'Intervieweur pose la question ; si le placement n'est pas dans les données, il le dit et renvoie vers la liste.
 
    **Il ne sait pas quoi choisir ?** Avec l'option « Je ne sais pas » de la liste, ou en écrivant *« je ne sais pas »*, l'application rejoue 8 placements courants (fonds larges, obligations, or) sur son profil et affiche ceux qui lui conviennent. Ce sont des exemples en simulation, pas une recommandation d'achat.
