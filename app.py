@@ -28,7 +28,7 @@ VERDICTS = {
                  "icone": "✅", "couleur": "green"},
     "A surveiller": {"humain": "Possible, mais à bien réfléchir", "technique": "À surveiller",
                      "icone": "⚠️", "couleur": "orange"},
-    "Incoherent": {"humain": "Ce placement ne vous convient pas", "technique": "Incohérent",
+    "Incoherent": {"humain": "Ce placement ne vous correspond pas", "technique": "Incohérent",
                    "icone": "⛔", "couleur": "red"},
 }
 STATUTS = {"ok": "✅", "depasse": "⚠️", "info_manquante": "❓"}
@@ -243,6 +243,28 @@ def phrase_regle(x: dict) -> str:
     return f"{fr(r)} : {val} (limite {lim})."
 
 
+AIDE_REGLES = {
+    "Perte maximale": "La plus grosse chute du placement entre un sommet et le creux qui suit, sur 2021-2026. "
+                      "On la compare à la baisse que la personne dit pouvoir supporter.",
+    "Volatilite": "À quel point la valeur monte et descend d'une année à l'autre. Plus elle est élevée, "
+                  "plus le parcours est agité, même si le placement finit en hausse.",
+    "Cryptoactifs": "La part de cryptomonnaies (Bitcoin, Ether) dans toute l'épargne de la personne, "
+                    "comparée au plafond de son profil.",
+    "Part stable": "La part placée dans des placements stables (obligations), qui amortissent les chutes. "
+                   "Un profil prudent en demande davantage.",
+    "Poids maximal": "La part de toute l'épargne mise sur un seul titre. Au-delà de la limite, "
+                     "une mauvaise nouvelle sur ce titre pèse trop lourd : c'est le principe de diversification.",
+    "Temps de recuperation": "Le temps qu'il aurait fallu, après le pire moment, pour retrouver la mise de départ. "
+                             "Il doit rester compatible avec le moment où la personne aura besoin de l'argent.",
+    "Exclusion ESG": "La personne veut éviter les entreprises liées à des controverses environnementales ou "
+                     "sociales. Sans source publique fiable, le système le signale au lieu de deviner.",
+}
+
+
+def aide_regle(regle: str) -> str:
+    return next((t for k, t in AIDE_REGLES.items() if regle.startswith(k)), "Une limite du profil de la personne.")
+
+
 def fiche_recu(r):
     with st.container(border=True):
         st.markdown(f"**{r.id} · {fr(r.libelle)}**")
@@ -268,33 +290,53 @@ def pastilles_recus(ids: list, par_id: dict, cle: str):
 # ======================================================================
 # En-tête et barre latérale
 # ======================================================================
-STYLE = """
+import base64
+from pathlib import Path
+
+
+def image_base64(chemin: str) -> str:
+    try:
+        return base64.b64encode(Path(chemin).read_bytes()).decode()
+    except OSError:
+        return ""
+
+
+FOND = image_base64("assets/entete.jpg")
+ROUGE, ROUGE_FONCE = "#D8232A", "#7A0E13"
+STYLE = f"""
 <style>
-.block-container {max-width: 1150px; padding-top: 2rem;}
-.af-hero {background: linear-gradient(135deg, #0F2747 0%, #1F4E8C 60%, #2E6FB7 100%);
-          color: #fff; border-radius: 18px; padding: 22px 28px; margin-bottom: 18px;
-          display: flex; gap: 18px; align-items: center; box-shadow: 0 6px 20px rgba(15,39,71,.18);}
-.af-logo {font-size: 46px; line-height: 1;}
-.af-titre {font-size: 30px; font-weight: 800; letter-spacing: .3px;}
-.af-sous {font-size: 17px; opacity: .92; margin-top: 2px;}
-.af-bandeau {font-size: 13px; opacity: .85; margin-top: 8px; padding: 4px 10px; display: inline-block;
-             background: rgba(255,255,255,.14); border-radius: 999px;}
-[data-testid="stVerticalBlockBorderWrapper"] {border-radius: 14px;}
-div[data-testid="stExpander"] details {border-radius: 14px;}
-.stTabs [data-baseweb="tab"] p {font-size: 16px; font-weight: 600;}
-[data-testid="stSidebar"] {background: #F3F6FB;}
-[data-testid="stChatMessage"] {border-radius: 14px;}
-[data-testid="stMetricValue"] {font-weight: 700;}
+.block-container {{max-width: 1150px; padding-top: 1.5rem;}}
+.af-hero {{position: relative; overflow: hidden; border-radius: 20px; padding: 34px 32px; margin-bottom: 16px;
+          color: #fff; box-shadow: 0 10px 28px rgba(122,14,19,.25);
+          background: linear-gradient(110deg, rgba(122,14,19,.96) 0%, rgba(216,35,42,.88) 55%, rgba(216,35,42,.55) 100%),
+                      url("data:image/jpeg;base64,{FOND}") center / cover no-repeat;}}
+.af-titre {{font-size: 34px; font-weight: 800; letter-spacing: .3px;}}
+.af-sous {{font-size: 18px; opacity: .95; margin-top: 4px;}}
+.af-bandeau {{font-size: 13px; margin-top: 12px; padding: 4px 12px; display: inline-block;
+             background: rgba(255,255,255,.18); border-radius: 999px;}}
+[data-testid="stVerticalBlockBorderWrapper"] {{border-radius: 16px;}}
+div[data-testid="stExpander"] details {{border-radius: 16px;}}
+/* 4) Onglets bien visibles */
+[role="tablist"] {{gap: 8px !important; flex-wrap: wrap;}}
+[data-testid="stTab"] {{background: #FBECEC !important; border-radius: 12px 12px 0 0 !important;
+                        padding: 10px 18px !important; height: auto !important;}}
+[data-testid="stTab"] p {{font-size: 20px !important; font-weight: 800 !important; color: {ROUGE_FONCE} !important;}}
+[data-testid="stTab"][aria-selected="true"] {{background: {ROUGE} !important;}}
+[data-testid="stTab"][aria-selected="true"] p {{color: #fff !important;}}
+[data-testid="stSidebar"] {{background: #FBF3F3;}}
+[data-testid="stChatMessage"] {{border-radius: 16px;}}
+/* 6) La barre d'outils des graphiques (vue tableau, recherche) prête à confusion : on la masque */
+[data-testid="stElementToolbar"] {{display: none;}}
+.af-pied {{font-size: 12px; color: #777; text-align: center; margin-top: 30px;}}
 </style>
 """
 st.markdown(STYLE, unsafe_allow_html=True)
 st.markdown(
-    "<div class='af-hero'><div class='af-logo'>⏳</div><div>"
+    "<div class='af-hero'>"
     "<div class='af-titre'>AlphaForge AI</div>"
     "<div class='af-sous'>Vivez votre placement avant de le faire.</div>"
-    "<div class='af-bandeau'>Simulation sur des données passées (nov. 2021 → nov. 2026) · personnes fictives · "
-    "pas un conseil financier : le passé ne prédit pas l'avenir</div>"
-    "</div></div>", unsafe_allow_html=True)
+    "<div class='af-bandeau'>Simulation · personnes fictives</div>"
+    "</div>", unsafe_allow_html=True)
 if HORS_LIGNE:
     st.caption("Mode hors ligne : textes gabarits, sans appel à Amazon Bedrock.")
 
@@ -348,31 +390,6 @@ with st.sidebar:
             "**Diversifier** : ne pas mettre tous ses œufs dans le même panier.  \n"
             "**Reçu (#R-…)** : la preuve d'un chiffre : son calcul, sa source et sa période.")
 
-    with st.expander("🏗️ Comment ça marche"):
-        st.graphviz_chart("""
-digraph {
-  rankdir=TB; bgcolor="transparent";
-  node [shape=box, style="rounded,filled", fillcolor="#f4f4f4", color="#999999", fontname="Helvetica", fontsize=11];
-  edge [color="#888888", fontname="Helvetica", fontsize=9];
-  app   [label="Application Streamlit"];
-  int   [label="Intervieweur\\n(agent IA, Bedrock)"];
-  mach  [label="Machine à remonter le temps\\n(code, AWS Lambda)"];
-  verd  [label="Règles du contrat\\n(code)"];
-  avo   [label="Avocat du diable\\n(agent IA, Bedrock)"];
-  expl  [label="Explicateur\\n(agent IA, Bedrock)"];
-  veri  [label="Vérificateur de reçus\\n(code)", fillcolor="#e6f0fb", color="#2f6fb3"];
-  s3    [label="Amazon S3\\ndonnées, reçus, traces", shape=cylinder];
-  app -> int [label=" demande"];
-  int -> mach; s3 -> mach [style=dashed];
-  mach -> verd [label=" reçus"];
-  verd -> avo [label=" verdict"];
-  avo -> expl -> veri;
-  veri -> app [label=" carte de vérité"];
-  veri -> expl [label=" défaut nommé", style=dashed, color="#c0392b", fontcolor="#c0392b"];
-}
-""", width="stretch")
-        st.caption("Le code calcule et décide ; l'IA questionne, conteste et explique. "
-                   "Le Vérificateur bloque tout texte dont un chiffre n'a pas de reçu.")
 
 etat = st.session_state
 etat.setdefault("messages", [])
@@ -385,6 +402,7 @@ if etat.get("persona") != cle_profil:
 # ======================================================================
 PLACEMENTS = liste_placements()
 NOM_DE = {t: lib.split(" — ", 1)[-1] for lib, t in PLACEMENTS}
+NOM_PHRASE = {t: NOMS_SIMPLES.get(t, n) for t, n in NOM_DE.items()}  # sans majuscule, pour une phrase
 exemple = argent(min(60_000, c["capital_total"] * 0.3))
 
 
@@ -407,9 +425,6 @@ def lancer_analyse(texte_utilisateur: str, ticker=None, montant=None, besoin=Non
             etat["messages"].append({"role": "assistant", "texte": res["question"]})
     else:
         etat.update(resultat=res, exploration=None, demande="")
-        v_ = VERDICTS[res["calc"]["evaluation"]["verdict"]]
-        etat["messages"].append({"role": "assistant", "texte": f"{v_['icone']} **{v_['humain']}.** "
-                                 "Voici ce que ce placement vous aurait fait vivre."})
 
 
 def lancer_exploration(texte_utilisateur: str, montant: float, besoin: float):
@@ -436,6 +451,10 @@ def lancer_exploration(texte_utilisateur: str, montant: float, besoin: float):
 # ======================================================================
 # Conversation
 # ======================================================================
+if not etat.get("resultat") and not etat.get("exploration"):
+    st.info(e(f"Vous êtes **{persona}**. Choisissez un placement ci-dessous, ou écrivez en bas ce que vous "
+              f"aimeriez faire de votre argent, par exemple : *Je veux mettre {exemple} dans Tesla, "
+              f"j'en aurai besoin dans {c['horizon_annees']} ans.*"))
 for m in etat["messages"]:
     st.chat_message(m["role"]).markdown(e(fr(m["texte"])))
 
@@ -457,7 +476,7 @@ with st.expander("🔎 Choisir un placement" + ("" if not res else " (essayer un
                                    f"j'en aurai besoin dans {besoin_d} ans.", montant_d, besoin_d)
             else:
                 etat["demande"] = ""
-                lancer_analyse(f"Je veux mettre {argent(montant_d)} dans {NOM_DE.get(choix_t, choix_t)}, "
+                lancer_analyse(f"Je veux mettre {argent(montant_d)} dans {NOM_PHRASE.get(choix_t, choix_t)}, "
                                f"j'en aurai besoin dans {besoin_d} ans.", ticker=choix_t,
                                montant=float(montant_d), besoin=float(besoin_d))
             st.rerun()
@@ -494,7 +513,7 @@ if expl and not res:
             st.markdown(e(f"Au pire moment : **{r_['creux'].affichage}** (chute de {sans_signe(r_['perte_max'].affichage)})  \n"
                           + ligne_fin))
             if st.button("Voir le détail", key=f"detail_{l['ticker']}", width="stretch"):
-                lancer_analyse(f"Montrez-moi le détail pour {NOM_DE.get(l['ticker'], l['ticker'])}.",
+                lancer_analyse(f"Montrez-moi le détail pour {NOM_PHRASE.get(l['ticker'], l['ticker'])}.",
                                ticker=l["ticker"], montant=float(expl["montant"]), besoin=float(expl["besoin"]))
                 st.rerun()
     exclus = [NOM_DE.get(l["ticker"], l["ticker"]) for l in expl["lignes"] if l["verdict"] == "Incoherent"]
@@ -503,9 +522,6 @@ if expl and not res:
     st.stop()
 
 if not res:
-    st.info(e(f"Vous êtes **{persona}**. Choisissez un placement juste au-dessus, ou écrivez en bas ce que "
-              f"vous aimeriez faire de votre argent, par exemple : *Je veux mettre {exemple} dans Tesla, "
-              f"j'en aurai besoin dans {c['horizon_annees']} ans.*"))
     st.stop()
 
 onglet_vous, onglet_etsi, onglet_preuves = st.tabs(["💬 Pour vous", "🔁 Et si…", "🧾 Les preuves"])
@@ -673,11 +689,14 @@ with onglet_preuves:
         st.subheader("Les règles vérifiées")
         for i, x in enumerate(ev["controles"]):
             st.markdown(f"{STATUTS[x['statut']]} **{fr(x['regle'])}** : {fr(x['valeur'])} "
-                        f"<span style='color:gray'>(limite {fr(x['limite'])})</span>", unsafe_allow_html=True)
+                        f"<span style='color:gray'>(limite {fr(x['limite'])})</span>", unsafe_allow_html=True,
+                        help=aide_regle(x["regle"]))
             pastilles_recus(x["recus"], par_id, f"ctl{i}")
 
     st.divider()
-    st.subheader("🧾 Carte de vérité (rédigée par l'Explicateur)")
+    st.subheader("🧾 Carte de vérité", help="Le résumé rédigé par l'IA. Chaque chiffre y est suivi d'un numéro "
+                 "de reçu : cliquez sur les pastilles plus bas pour voir d'où il vient. Le Vérificateur bloque "
+                 "tout texte qui contient un chiffre sans reçu.")
     st.markdown(e(fr(res["carte"])))
     relances = sum(1 for e in res["trace"] if "essai" in e["action"] and not e["action"].endswith("essai 1"))
     st.caption(f"{len(v['chiffres_verifies'])} chiffres vérifiés · "
@@ -690,8 +709,11 @@ with onglet_preuves:
         st.markdown("**Reçus cités dans ce texte** (cliquez pour voir le calcul et la source)")
         pastilles_recus(v["recus_cites"], par_id, "carte")
 
-    with st.expander("🗣️ Réponse de l'Avocat du diable"):
-        st.markdown(e(fr(res["avocat"])))
+    st.subheader("🔄 Et si on voyait les choses autrement ?",
+                 help="Ici, un agent IA joue le rôle d'un conseiller exigeant : il remet en question la demande, "
+                      "rappelle ce que la personne aurait vécu et propose d'autres répartitions. Il ne change jamais "
+                      "le verdict, qui vient des règles du profil.")
+    st.markdown(e(fr(res["avocat"])))
     with st.expander(f"📑 Les {len(reg.recus)} reçus (calcul, source, période, devise)"):
         tableau = pd.DataFrame(reg.en_dicts())[["id", "libelle", "affichage", "periode", "calcul", "sources", "devise"]]
         for col in ("libelle", "periode", "calcul"):
@@ -700,5 +722,6 @@ with onglet_preuves:
                                              "periode": "Période", "calcul": "Calcul", "sources": "Sources",
                                              "devise": "Devise"}),
                      hide_index=True, width="stretch")
-    with st.expander("🔍 Trace d'exécution des agents"):
-        st.json(res["trace"])
+
+st.markdown("<div class='af-pied'>Simulation éducative sur des données passées (2021-2026). "
+            "Ce n'est pas un conseil financier.</div>", unsafe_allow_html=True)

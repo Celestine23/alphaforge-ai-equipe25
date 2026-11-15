@@ -1,8 +1,8 @@
 # Thème de l'application (lu automatiquement par « streamlit run app.py » depuis ce dossier)
 [theme]
-primaryColor = "#1F4E8C"
+primaryColor = "#D8232A"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F3F6FB"
+secondaryBackgroundColor = "#FBF3F3"
 textColor = "#1B2430"
 font = "sans serif"
 
