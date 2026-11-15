@@ -3,7 +3,7 @@
 **Datathon PolyFinances 2026 · Banque Nationale × AWS**
 Simulation uniquement : personas fictifs, aucune transaction, aucun conseil financier personnalisé.
 
-- **Application en ligne :** LIEN_A_REMPLACER
+- **Application en ligne :** http://98.80.14.243:8501
 - **Dépôt GitHub :** https://github.com/Celestine23/alphaforge-ai-equipe25
 - **Installer et lancer en local :** voir la section [Installation](#installation) ci-dessous.
 
