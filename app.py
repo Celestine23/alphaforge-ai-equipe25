@@ -470,7 +470,7 @@ res = etat.get("resultat")
 ouvert = not res or etat.pop("ouvrir_choix", False)
 with st.expander("🔎 Choisir un placement" + ("" if not res else " (essayer un autre)"), expanded=ouvert):
     with st.form("choix_direct", border=False):
-        options = [EXPLORER] + [t for _, t in PLACEMENTS]
+        options = [EXPLORER] + sorted((t for _, t in PLACEMENTS), key=lambda t: libelle_liste(t).upper())
         choix_t = st.selectbox("Dans quoi voulez-vous placer votre argent ?", options,
                                format_func=lambda t: t if t == EXPLORER else libelle_liste(t))
         cc1, cc2 = st.columns(2)
