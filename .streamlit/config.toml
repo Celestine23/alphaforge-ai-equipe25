@@ -1,0 +1,13 @@
+# Thème de l'application (lu automatiquement par « streamlit run app.py » depuis ce dossier)
+[theme]
+primaryColor = "#1F4E8C"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F3F6FB"
+textColor = "#1B2430"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"   # masque le bouton « Deploy »
+
+[browser]
+gatherUsageStats = false

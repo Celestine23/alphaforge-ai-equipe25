@@ -136,6 +136,12 @@ def sans_refs(texte: str) -> str:
     return _REFS.sub("", texte)
 
 
+def e(texte) -> str:
+    """Échappe le « $ » : dans Streamlit, deux « $ » dans un même texte déclenchent une formule
+    mathématique (le texte entre les deux s'affiche en vert, comme du code)."""
+    return str(texte).replace("$", "\\$")
+
+
 def argent(x: float) -> str:
     return f"{fmt_nombre(round(x, -2))} $"
 
@@ -165,6 +171,47 @@ try:
     UNIVERS = pd.read_csv("data/assets_universe.csv").set_index("ticker")["name"].to_dict()
 except Exception:  # noqa: BLE001 — affichage seulement
     UNIVERS = {}
+
+
+CATEGORIES = {"equity": "Action", "etf_equity": "Fonds d'actions", "etf_bond": "Obligations",
+              "etf_commodity": "Or", "crypto": "Cryptomonnaie"}
+EXPLORER = "🤔 Je ne sais pas : montrez-moi des placements adaptés à mon profil"
+# Placements testés quand la personne ne sait pas quoi choisir : des fonds larges et des obligations,
+# pas des titres individuels (on montre des exemples compatibles, pas une recommandation d'achat).
+CANDIDATS = ["XIU.TO", "SPY", "ESGV", "QQQ", "XBB.TO", "ZST.TO", "AGG", "GLD"]
+VEUT_DES_OPTIONS = re.compile(r"je ne sais pas|sais pas|aucune id[ée]e|propos|conseill|sugg|lequel|"
+                              r"quoi choisir|que choisir|des options|des id[ée]es", re.I)
+
+
+def liste_placements() -> list:
+    """(libellé lisible, symbole) pour les 31 placements des données, regroupés par catégorie."""
+    try:
+        u = pd.read_csv("data/assets_universe.csv")
+    except Exception:  # noqa: BLE001
+        return []
+    ordre = {"etf_equity": 0, "etf_bond": 1, "etf_commodity": 2, "equity": 3, "crypto": 4}
+    u = u.assign(o=u["asset_class"].map(ordre)).sort_values(["o", "market", "name"])
+    sortie = []
+    for _, r in u.iterrows():
+        nom = NOMS_SIMPLES.get(r["ticker"])
+        nom = nom[0].upper() + nom[1:] if nom else f"{r['name']} ({r['ticker'].split('.')[0]})"
+        pays = " · Canada" if r["ticker"].endswith(".TO") and r["asset_class"] == "equity" else (
+            " · États-Unis" if r["asset_class"] == "equity" else "")
+        sortie.append((f"{CATEGORIES.get(r['asset_class'], '')}{pays} — {nom}", r["ticker"]))
+    return sortie
+
+
+def extraire_montant(txt: str):
+    m = re.search(r"(\d{1,3}(?:[ \u00a0\u202f]?\d{3})+|\d+)\s*(k|000)?\s*\$", txt)
+    if not m:
+        return None
+    x = float(re.sub(r"\D", "", m.group(1)))
+    return x * 1000 if m.group(2) == "k" else x
+
+
+def extraire_horizon(txt: str):
+    m = re.search(r"(\d+)\s*ans", txt)
+    return float(m.group(1)) if m else None
 
 
 def phrase_regle(x: dict) -> str:
@@ -199,7 +246,7 @@ def phrase_regle(x: dict) -> str:
 def fiche_recu(r):
     with st.container(border=True):
         st.markdown(f"**{r.id} · {fr(r.libelle)}**")
-        st.markdown(f"### {r.affichage}")
+        st.markdown(e(f"### {r.affichage}"))
         st.caption(f"Période : {fr(r.periode)}  \nCalcul : {fr(r.calcul)}  \n"
                    f"Sources : {r.sources}  \nDevise : {r.devise}")
 
@@ -221,20 +268,44 @@ def pastilles_recus(ids: list, par_id: dict, cle: str):
 # ======================================================================
 # En-tête et barre latérale
 # ======================================================================
-st.warning("**Simulation sur des données passées (nov. 2021 → nov. 2026).** Personnes fictives. "
-           "Ce n'est pas un conseil financier : le passé ne prédit pas l'avenir.")
-st.title("⏳ AlphaForge AI")
-st.markdown("##### Vivez votre placement avant de le faire.")
+STYLE = """
+<style>
+.block-container {max-width: 1150px; padding-top: 2rem;}
+.af-hero {background: linear-gradient(135deg, #0F2747 0%, #1F4E8C 60%, #2E6FB7 100%);
+          color: #fff; border-radius: 18px; padding: 22px 28px; margin-bottom: 18px;
+          display: flex; gap: 18px; align-items: center; box-shadow: 0 6px 20px rgba(15,39,71,.18);}
+.af-logo {font-size: 46px; line-height: 1;}
+.af-titre {font-size: 30px; font-weight: 800; letter-spacing: .3px;}
+.af-sous {font-size: 17px; opacity: .92; margin-top: 2px;}
+.af-bandeau {font-size: 13px; opacity: .85; margin-top: 8px; padding: 4px 10px; display: inline-block;
+             background: rgba(255,255,255,.14); border-radius: 999px;}
+[data-testid="stVerticalBlockBorderWrapper"] {border-radius: 14px;}
+div[data-testid="stExpander"] details {border-radius: 14px;}
+.stTabs [data-baseweb="tab"] p {font-size: 16px; font-weight: 600;}
+[data-testid="stSidebar"] {background: #F3F6FB;}
+[data-testid="stChatMessage"] {border-radius: 14px;}
+[data-testid="stMetricValue"] {font-weight: 700;}
+</style>
+"""
+st.markdown(STYLE, unsafe_allow_html=True)
+st.markdown(
+    "<div class='af-hero'><div class='af-logo'>⏳</div><div>"
+    "<div class='af-titre'>AlphaForge AI</div>"
+    "<div class='af-sous'>Vivez votre placement avant de le faire.</div>"
+    "<div class='af-bandeau'>Simulation sur des données passées (nov. 2021 → nov. 2026) · personnes fictives · "
+    "pas un conseil financier : le passé ne prédit pas l'avenir</div>"
+    "</div></div>", unsafe_allow_html=True)
 if HORS_LIGNE:
     st.caption("Mode hors ligne : textes gabarits, sans appel à Amazon Bedrock.")
 
 with st.sidebar:
     noms = [k for k in ("Robert", "Mateo", "Amira") if k in CONTRATS]
-    choix = st.radio("Qui êtes-vous ?", noms + [PERSO], horizontal=True)
+    AVATARS = {"Robert": "👴 Robert", "Mateo": "👨‍👧 Mateo", "Amira": "👩‍💻 Amira", PERSO: PERSO}
+    choix = st.radio("Qui êtes-vous ?", noms + [PERSO], horizontal=True, format_func=lambda n: AVATARS[n])
     perso = choix == PERSO
     if perso:
         st.caption("Répondez à quelques questions. Le profil reste **fictif** : rien n'est enregistré.")
-        prenom = st.text_input("Votre prénom", "Myriam").strip() or "Moi"
+        prenom = st.text_input("Votre prénom", "", placeholder="Votre prénom").strip() or "Vous"
         age = st.number_input("Votre âge", 18, 95, 30)
         horizon_p = st.slider("Dans combien d'années aurez-vous besoin de cet argent ?", 1, 30, 10)
         perte_p = st.select_slider("Si votre placement baissait, à partir de quelle perte "
@@ -253,16 +324,16 @@ with st.sidebar:
     c = CONTRATS[persona]
     with st.container(border=True):
         st.markdown(f"**{persona}, {c['age']} ans**")
-        st.markdown(f"Aura besoin de son argent dans environ **{c['horizon_annees']} ans**.  \n"
-                    f"Peut supporter une baisse d'au plus **{sans_signe(c['perte_max_toleree_pct'])} %**.  \n"
-                    f"Épargne fictive : **{argent(c['capital_total'])}**.")
+        st.markdown(e(f"Aura besoin de son argent dans environ **{c['horizon_annees']} ans**.  \n"
+                      f"Peut supporter une baisse d'au plus **{sans_signe(c['perte_max_toleree_pct'])} %**.  \n"
+                      f"Épargne fictive : **{argent(c['capital_total'])}**."))
         if c.get("exclusions_secteurs"):
             st.markdown("Veut éviter les entreprises controversées (critères ESG).")
         if perso:
             st.caption(f"Profil déduit : **{c['modele']}** (selon la perte acceptée). Les autres limites "
                        "reprennent celles des personas de référence : ce sont des hypothèses.")
     if st.button("Nouvelle conversation", width="stretch"):
-        for k in ("messages", "demande", "resultat"):
+        for k in ("messages", "demande", "resultat", "exploration"):
             st.session_state.pop(k, None)
         st.rerun()
 
@@ -307,37 +378,134 @@ etat = st.session_state
 etat.setdefault("messages", [])
 etat.setdefault("demande", "")
 if etat.get("persona") != cle_profil:
-    etat.update(messages=[], demande="", resultat=None, persona=cle_profil)
+    etat.update(messages=[], demande="", resultat=None, exploration=None, persona=cle_profil)
+
+# ======================================================================
+# Lancer une analyse (depuis la conversation ou depuis le choix direct)
+# ======================================================================
+PLACEMENTS = liste_placements()
+NOM_DE = {t: lib.split(" — ", 1)[-1] for lib, t in PLACEMENTS}
+exemple = argent(min(60_000, c["capital_total"] * 0.3))
+
+
+def lancer_analyse(texte_utilisateur: str, ticker=None, montant=None, besoin=None):
+    etat["messages"].append({"role": "user", "texte": texte_utilisateur})
+    with st.spinner("Les agents analysent la demande…"):
+        with calcul_local(perso):
+            res = analyser(persona, etat["demande"] or texte_utilisateur,
+                           ticker=ticker, montant=montant, besoin=besoin)
+    if "question" in res:
+        info = res["trace"][0]["sortie"] if res.get("trace") else {}
+        if not info.get("ticker"):
+            # Placement introuvable : on explique pourquoi au lieu de reposer la même question.
+            etat["messages"].append({"role": "assistant", "texte": (
+                "Je ne trouve pas ce placement parmi les **31 placements** de nos données (actions, fonds, "
+                "obligations, or, cryptomonnaies). Choisissez-en un dans **« Choisir un placement »** "
+                "juste au-dessus, ou écrivez *« je ne sais pas »* pour voir des placements adaptés à votre profil.")})
+            etat["ouvrir_choix"] = True
+        else:
+            etat["messages"].append({"role": "assistant", "texte": res["question"]})
+    else:
+        etat.update(resultat=res, exploration=None, demande="")
+        v_ = VERDICTS[res["calc"]["evaluation"]["verdict"]]
+        etat["messages"].append({"role": "assistant", "texte": f"{v_['icone']} **{v_['humain']}.** "
+                                 "Voici ce que ce placement vous aurait fait vivre."})
+
+
+def lancer_exploration(texte_utilisateur: str, montant: float, besoin: float):
+    """Teste des placements courants sur le profil et garde ceux qui lui conviennent."""
+    etat["messages"].append({"role": "user", "texte": texte_utilisateur})
+    lignes = []
+    with st.spinner("Je teste plusieurs placements courants sur votre profil…"):
+        with calcul_local(perso):
+            for t in CANDIDATS:
+                try:
+                    cal = calculer(persona, t, float(montant), float(besoin))
+                except Exception:  # noqa: BLE001 — un placement en erreur ne bloque pas les autres
+                    continue
+                lignes.append({"ticker": t, "verdict": cal["evaluation"]["verdict"], "recus": cal["principal"]["recus"]})
+    rang = {"Coherent": 0, "A surveiller": 1, "Incoherent": 2}
+    lignes.sort(key=lambda l: (rang[l["verdict"]], l["recus"]["perte_max"].valeur * -1))
+    etat.update(exploration={"lignes": lignes, "montant": montant, "besoin": besoin}, resultat=None, demande="")
+    n = sum(l["verdict"] != "Incoherent" for l in lignes)
+    etat["messages"].append({"role": "assistant", "texte": (
+        f"J'ai rejoué **{len(lignes)} placements courants** sur votre profil : **{n}** lui conviennent ou "
+        "sont à étudier. Ce sont des exemples en simulation, pas une recommandation d'achat.")})
+
 
 # ======================================================================
 # Conversation
 # ======================================================================
 for m in etat["messages"]:
-    st.chat_message(m["role"]).markdown(fr(m["texte"]))
+    st.chat_message(m["role"]).markdown(e(fr(m["texte"])))
 
-exemple = argent(min(60_000, c["capital_total"] * 0.3))
+# Choisir directement, sans écrire de phrase.
+res = etat.get("resultat")
+ouvert = not res or etat.pop("ouvrir_choix", False)
+with st.expander("🔎 Choisir un placement" + ("" if not res else " (essayer un autre)"), expanded=ouvert):
+    with st.form("choix_direct", border=False):
+        options = [EXPLORER] + [t for _, t in PLACEMENTS]
+        choix_t = st.selectbox("Dans quoi voulez-vous placer votre argent ?", options,
+                               format_func=lambda t: t if t == EXPLORER else NOM_DE.get(t, t))
+        cc1, cc2 = st.columns(2)
+        montant_d = cc1.number_input("Montant ($ CA)", 1000, 5_000_000,
+                                     int(min(60_000, c["capital_total"] * 0.3)), step=1000)
+        besoin_d = cc2.slider("J'aurai besoin de cet argent dans… (années)", 1, 30, int(c["horizon_annees"]))
+        if st.form_submit_button("Voir le résultat", type="primary", width="stretch"):
+            if choix_t == EXPLORER:
+                lancer_exploration(f"Je ne sais pas dans quoi placer {argent(montant_d)} ; "
+                                   f"j'en aurai besoin dans {besoin_d} ans.", montant_d, besoin_d)
+            else:
+                etat["demande"] = ""
+                lancer_analyse(f"Je veux mettre {argent(montant_d)} dans {NOM_DE.get(choix_t, choix_t)}, "
+                               f"j'en aurai besoin dans {besoin_d} ans.", ticker=choix_t,
+                               montant=float(montant_d), besoin=float(besoin_d))
+            st.rerun()
+
 saisie = st.chat_input(f"Ex. : Je veux mettre {exemple} dans Tesla (en tant que {persona})")
 if saisie:
-    etat["messages"].append({"role": "user", "texte": saisie})
-    etat["demande"] = (etat["demande"] + " " + saisie).strip()
-    with st.spinner("Les agents analysent la demande…"):
-        with calcul_local(perso):
-            res = analyser(persona, etat["demande"])
-    if "question" in res:
-        etat["messages"].append({"role": "assistant", "texte": res["question"]})
+    if VEUT_DES_OPTIONS.search(saisie):
+        tout = etat["demande"] + " " + saisie
+        lancer_exploration(saisie, extraire_montant(tout) or min(60_000, c["capital_total"] * 0.3),
+                           extraire_horizon(tout) or c["horizon_annees"])
     else:
-        etat["resultat"] = res
-        verdict = VERDICTS[res["calc"]["evaluation"]["verdict"]]
-        etat["messages"].append({"role": "assistant",
-                                 "texte": f"{verdict['icone']} **{verdict['humain']}.** "
-                                          "Voici ce que ce placement vous aurait fait vivre."})
+        etat["demande"] = (etat["demande"] + " " + saisie).strip()
+        lancer_analyse(saisie)
     st.rerun()
 
-res = etat.get("resultat")
+# Résultat de l'exploration : placements compatibles avec le profil.
+expl = etat.get("exploration")
+if expl and not res:
+    st.markdown(e(f"#### Placements compatibles avec votre profil  \n"
+                  f"<span style='color:gray'>Pour {argent(expl['montant'])}, besoin dans {expl['besoin']:g} ans. "
+                  "Simulation sur 2021-2026 : des exemples, pas une recommandation d'achat.</span>"),
+                unsafe_allow_html=True)
+    bons = [l for l in expl["lignes"] if l["verdict"] != "Incoherent"]
+    if not bons:
+        st.warning("Aucun des placements testés ne respecte toutes les limites de votre profil. "
+                   "Essayez un horizon plus long ou un montant plus petit.")
+    cols = st.columns(2)
+    for i, l in enumerate(bons):
+        v_, r_ = VERDICTS[l["verdict"]], l["recus"]
+        with cols[i % 2], st.container(border=True):
+            st.markdown(e(f"{v_['icone']} **{NOM_DE.get(l['ticker'], l['ticker'])}**"))
+            ligne_fin = (f"Quand vous auriez eu besoin de l'argent : **{r_['besoin'].affichage}**" if "besoin" in r_
+                         else f"À la fin de la période : **{r_['fin'].affichage}**")
+            st.markdown(e(f"Au pire moment : **{r_['creux'].affichage}** (chute de {sans_signe(r_['perte_max'].affichage)})  \n"
+                          + ligne_fin))
+            if st.button("Voir le détail", key=f"detail_{l['ticker']}", width="stretch"):
+                lancer_analyse(f"Montrez-moi le détail pour {NOM_DE.get(l['ticker'], l['ticker'])}.",
+                               ticker=l["ticker"], montant=float(expl["montant"]), besoin=float(expl["besoin"]))
+                st.rerun()
+    exclus = [NOM_DE.get(l["ticker"], l["ticker"]) for l in expl["lignes"] if l["verdict"] == "Incoherent"]
+    if exclus:
+        st.caption("Ne conviennent pas à votre profil : " + " ; ".join(exclus) + ".")
+    st.stop()
+
 if not res:
-    st.info(f"Vous êtes **{persona}**. Écrivez en bas ce que vous aimeriez faire de votre argent, "
-            f"par exemple : *Je veux mettre {exemple} dans Tesla, j'en aurai besoin dans "
-            f"{c['horizon_annees']} ans.*")
+    st.info(e(f"Vous êtes **{persona}**. Choisissez un placement juste au-dessus, ou écrivez en bas ce que "
+              f"vous aimeriez faire de votre argent, par exemple : *Je veux mettre {exemple} dans Tesla, "
+              f"j'en aurai besoin dans {c['horizon_annees']} ans.*"))
     st.stop()
 
 onglet_vous, onglet_etsi, onglet_preuves = st.tabs(["💬 Pour vous", "🔁 Et si…", "🧾 Les preuves"])
@@ -379,9 +547,14 @@ info = VERDICTS[ev["verdict"]]
 # ======================================================================
 with onglet_vous:
     if p["montant"] > c["capital_total"]:
-        st.warning(f"Vous voulez placer **{argent(p['montant'])}**, soit plus que votre épargne totale "
-                   f"(**{argent(c['capital_total'])}**). Vérifiez le montant : les pourcentages ci-dessous "
-                   "dépassent 100 % de votre argent.")
+        st.warning(e(f"Vous voulez placer **{argent(p['montant'])}**, soit plus que votre épargne totale "
+                     f"(**{argent(c['capital_total'])}**). Vérifiez le montant : les pourcentages ci-dessous "
+                     "dépassent 100 % de votre argent."))
+    horizon_utilise = calc["contrat"]["horizon_annees"]
+    if not recalcule and float(horizon_utilise) != float(c["horizon_annees"]):
+        st.info(f"🕒 Le profil de **{persona}** prévoit d'avoir besoin de son argent dans environ "
+                f"**{c['horizon_annees']} ans**. Pour ce placement, vous indiquez **{horizon_utilise:g} ans** : "
+                "le calcul utilise **ce que vous avez dit**. Si ce n'est pas voulu, corrigez-le dans « Et si… ».")
     with st.container(border=True):
         st.markdown(f"## {info['icone']} :{info['couleur']}[{info['humain']}]")
         if recalcule:
@@ -407,7 +580,7 @@ with onglet_vous:
             histoire += (f" Au moment où vous auriez eu besoin de l'argent ({mois_annee(p['date_besoin'])}), "
                          f"il aurait valu **{rc['besoin'].affichage}**.")
         st.markdown("**Ce que vous auriez vécu**")
-        st.markdown(histoire)
+        st.markdown(e(histoire))
 
         problemes = [x for x in ev["controles"] if x["statut"] != "ok"]
         # Honnêteté : une fin heureuse sur CETTE période ne rend pas le placement adapté.
@@ -424,7 +597,7 @@ with onglet_vous:
         if problemes:
             st.markdown("**Pourquoi c'est important pour vous**")
             for x in problemes:
-                st.markdown(f"- {phrase_regle(x)}")
+                st.markdown(e(f"- {phrase_regle(x)}"))
         else:
             st.markdown("**Pourquoi ça vous convient** : toutes les limites que vous nous avez données "
                         "sont respectées.")
@@ -455,16 +628,17 @@ with onglet_vous:
     st.altair_chart((ligne + regle + regle_txt + point + texte).properties(height=340), width="stretch")
 
     if alts:
-        st.markdown("#### Des options plus adaptées à votre profil")
+        st.markdown("#### " + ("D'autres options conformes à votre profil" if ev["verdict"] == "Coherent"
+                               else "Des options plus adaptées à votre profil"))
         cols = st.columns(len(alts))
         for col, a in zip(cols, alts):
             va = VERDICTS[a["eval"]["verdict"]]
             ra = a["res"]["recus"]
             with col, st.container(border=True):
-                st.markdown(f"{va['icone']} **{nom_simple(a['res']['poids'])}**")
-                st.markdown(f"Au pire moment : **{ra['creux'].affichage}**  \n"
-                            + (f"Quand vous auriez eu besoin de l'argent : **{ra['besoin'].affichage}**"
-                               if "besoin" in ra else f"À la fin de la période : **{ra['fin'].affichage}**"))
+                st.markdown(e(f"{va['icone']} **{nom_simple(a['res']['poids'])}**"))
+                st.markdown(e(f"Au pire moment : **{ra['creux'].affichage}**  \n"
+                              + (f"Quand vous auriez eu besoin de l'argent : **{ra['besoin'].affichage}**"
+                                 if "besoin" in ra else f"À la fin de la période : **{ra['fin'].affichage}**")))
 
     st.caption(f"🔍 Chaque chiffre de cette page vient d'un calcul vérifiable sur les données réelles "
                f"2021-2026 (onglet « Les preuves »). Fidélité aux reçus : {v['score']:.0f} %.")
@@ -504,7 +678,7 @@ with onglet_preuves:
 
     st.divider()
     st.subheader("🧾 Carte de vérité (rédigée par l'Explicateur)")
-    st.markdown(fr(res["carte"]))
+    st.markdown(e(fr(res["carte"])))
     relances = sum(1 for e in res["trace"] if "essai" in e["action"] and not e["action"].endswith("essai 1"))
     st.caption(f"{len(v['chiffres_verifies'])} chiffres vérifiés · "
                f"relances de correction par le Vérificateur : {relances}")
@@ -517,7 +691,7 @@ with onglet_preuves:
         pastilles_recus(v["recus_cites"], par_id, "carte")
 
     with st.expander("🗣️ Réponse de l'Avocat du diable"):
-        st.markdown(fr(res["avocat"]))
+        st.markdown(e(fr(res["avocat"])))
     with st.expander(f"📑 Les {len(reg.recus)} reçus (calcul, source, période, devise)"):
         tableau = pd.DataFrame(reg.en_dicts())[["id", "libelle", "affichage", "periode", "calcul", "sources", "devise"]]
         for col in ("libelle", "periode", "calcul"):

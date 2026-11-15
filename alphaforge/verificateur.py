@@ -40,6 +40,9 @@ def verifier(texte: str, recus: list) -> dict:
     refs_inconnues = sorted({r for r in refs if r not in ids})
     propre = REF.sub(" ", texte)
     propre = re.sub(r"\b(19|20)\d{2}(-\d{2}-\d{2})?\b", " ", propre)  # annees et dates
+    # Jours écrits avec le mois (« le 30 juin 2022 ») : une date, pas une donnée à sourcer.
+    propre = re.sub(r"\b\d{1,2}(?:er)?\s+(?:janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|"
+                    r"septembre|octobre|novembre|d[ée]cembre)\b", " ", propre, flags=re.I)
     trouves, orphelins = [], []
     for m in NB.finditer(propre):
         brut, unite = m.group(1), m.group(2)

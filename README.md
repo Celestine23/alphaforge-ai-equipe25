@@ -8,7 +8,13 @@ L'assistant fait **vivre** à l'investisseur ce que son placement lui aurait fai
 ## Ce que voit l'utilisateur
 
 1. **Il choisit un profil** dans la barre latérale : Robert, Mateo ou Amira (les personas du défi), ou **« ➕ Mon profil »** pour décrire un profil fictif en quelques questions simples (horizon, perte acceptée, épargne, préférences ESG et crypto). L'application en déduit un profil prudent, équilibré ou audacieux.
-2. **Il écrit sa demande** en langage courant, par exemple : *« Je veux mettre 60 000 $ dans Tesla, j'en aurai besoin dans 4 ans. »* S'il manque une information (l'horizon, par exemple), l'Intervieweur pose la question.
+2. **Il dit ce qu'il veut faire**, de deux façons au choix :
+   - **« 🔎 Choisir un placement »** : une liste des 31 placements des données, avec des noms compréhensibles, plus le montant et l'horizon, puis « Voir le résultat » ; aucune phrase à écrire ;
+   - **la conversation**, en langage courant, par exemple : *« Je veux mettre 60 000 $ dans Tesla, j'en aurai besoin dans 4 ans. »* S'il manque une information (l'horizon, par exemple), l'Intervieweur pose la question ; si le placement n'est pas dans les données, il le dit et renvoie vers la liste.
+
+   **Il ne sait pas quoi choisir ?** Avec l'option « Je ne sais pas » de la liste, ou en écrivant *« je ne sais pas »*, l'application rejoue 8 placements courants (fonds larges, obligations, or) sur son profil et affiche ceux qui lui conviennent. Ce sont des exemples en simulation, pas une recommandation d'achat.
+
+   Si l'horizon donné dans la demande diffère de celui du profil (Mateo : environ 10 ans, mais « 15 ans » pour ce placement), le calcul utilise ce que la personne a dit, et l'application le signale clairement.
 3. **Il lit le résultat dans trois onglets :**
 
 | Onglet | Pour qui | Contenu |
@@ -73,18 +79,18 @@ L'application s'ouvre sur `http://localhost:8501`. Pour l'arrêter : **Ctrl + C*
 
 ```bash
 # Mac / Linux
-export AWS_REGION="ca-central-1"                    # région indiquée par les organisateurs
-export BEDROCK_MODEL_ID="<id copié depuis la console Bedrock>"
-export ALPHAFORGE_BUCKET="<nom du compartiment S3>"  # facultatif : traces dans S3
+export AWS_REGION="us-east-1"                       # région du compte d'équipe
+export BEDROCK_MODEL_ID="us.amazon.nova-pro-v1:0"
+export ALPHAFORGE_BUCKET="alphaforge-equipe25-2026"   # traces dans S3
 export ALPHAFORGE_LAMBDA="alphaforge-machine"        # facultatif : calculs dans Lambda
 streamlit run app.py
 ```
 
 ```powershell
 # Windows PowerShell
-$env:AWS_REGION="ca-central-1"
-$env:BEDROCK_MODEL_ID="<id copié depuis la console Bedrock>"
-$env:ALPHAFORGE_BUCKET="<nom du compartiment S3>"
+$env:AWS_REGION="us-east-1"
+$env:BEDROCK_MODEL_ID="us.amazon.nova-pro-v1:0"
+$env:ALPHAFORGE_BUCKET="alphaforge-equipe25-2026"
 $env:ALPHAFORGE_LAMBDA="alphaforge-machine"
 streamlit run app.py
 ```
