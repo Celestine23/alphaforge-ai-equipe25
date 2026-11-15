@@ -1,6 +1,6 @@
 pandas
 numpy
-streamlit
+streamlit>=1.50
 altair
 boto3
 strands-agents
