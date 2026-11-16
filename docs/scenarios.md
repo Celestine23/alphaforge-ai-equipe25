@@ -14,7 +14,7 @@ Données : relecture du 12 novembre 2021 au 12 novembre 2026, en CAD. Seuils des
 | 6 | Amira | « 10 000 $ en Bitcoin, dans 15 ans » | À surveiller | Même actif, mais 10 % du capital : le plafond est respecté ; la volatilité reste signalée | À surveiller | 100 % |
 | 7 | Mateo | « 30 000 $ dans Exxon, dans 10 ans » | À surveiller | Secteur de l'énergie : aucune source ESG documentée, donc le système dit « information manquante » au lieu d'inventer une controverse | À surveiller | 100 % |
 
-Les colonnes **Obtenu** et **Fidélité** viennent du mode sans IA. Elles sont à revérifier une fois Bedrock branché.
+Les colonnes **Obtenu** et **Fidélité** viennent du mode sans IA (`scripts/test_scenarios.py`, 7/7 conformes). Le verdict est calculé par le code (`verdict.py`), sans IA : il est le même avec Bedrock. La fidélité, elle, porte sur le texte rédigé par les agents ; avec Bedrock, chaque texte est contrôlé à chaque analyse par le Vérificateur et son score est affiché dans l'onglet « Les preuves ».
 
 ## Ce que les scénarios démontrent
 

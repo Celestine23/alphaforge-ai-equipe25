@@ -28,8 +28,8 @@ Sous Windows : `python` au lieu de `python3`, et `$env:ALPHAFORGE_HORS_LIGNE="1"
 ## Ce qui reste (décisions d'équipe)
 
 1. ~~Règle crypto calculée sur le placement~~ : **corrigé par Celestine** (18 h), vérifié par les scénarios 5 et 6.
-2. **Volatilité des portefeuilles mixtes crypto + actions** sous-estimée (√252 au lieu de √365). Correctif d'une ligne dans `machine.py`, détaillé dans `docs/validation_habib.md`, point 6.2. Aucun scénario de démo touché. Décision : [à remplir].
-3. **Arrondi trompeur près des limites** (XBB : « −15 % » face à une limite de « −15 % » ; le verdict « À surveiller » est juste depuis la règle « de peu » de Celestine, mais l'affichage peut surprendre). Proposition : une décimale près de la limite. Décision : [à remplir].
+2. **Volatilité des portefeuilles mixtes crypto + actions** sous-estimée (√252 au lieu de √365). Correctif d'une ligne dans `machine.py`, détaillé dans `docs/validation_habib.md`, point 6.2. Aucun scénario de démo touché. Décision (15 nov., soir) : **code inchangé avant le dépôt** pour ne pas avoir à revalider le notebook, les tests et la Lambda ; écart inscrit dans les limites connues du README, correctif à appliquer après le datathon.
+3. **Arrondi trompeur près des limites** (XBB : « −15 % » face à une limite de « −15 % » ; le verdict « À surveiller » est juste depuis la règle « de peu » de Celestine, mais l'affichage peut surprendre). Proposition : une décimale près de la limite. Décision (15 nov., soir) : **affichage inchangé avant le dépôt** ; comportement expliqué dans les limites connues du README, à corriger après le datathon.
 4. **ESGV a plus baissé que SPY en 2022** : l'hypothèse « les fonds ESG excluent l'énergie » est à vérifier sur la page méthodologique de Vanguard avant de la dire au jury.
 
 ## Si un chiffre change

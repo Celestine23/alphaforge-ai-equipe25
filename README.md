@@ -123,9 +123,11 @@ Jeu de départ AlphaForge fourni par les organisateurs (`data/`, voir `data/READ
 
 Choix de méthode : rendements sur `adj_close` ; conversion en CAD avec le taux de la Banque du Canada (dernier taux connu reporté les jours sans publication) ; volatilité annualisée sur 252 jours (365 pour la crypto) ; fenêtres glissantes plafonnées à 3 ans faute d'historique.
 
+Le script `build_dataset.py` et le fichier `data_quality_warnings.txt` cités dans `data/README_donnees.md` appartiennent au paquet des organisateurs et ne sont pas repris dans ce dépôt : les CSV de `data/` sont utilisés tels que fournis, sans retéléchargement.
+
 ## Limites connues
 
-Une seule période historique (le passé ne prédit pas l'avenir) ; biais du survivant (actifs choisis en 2026) ; aucune donnée ESG fournie (le système signale l'information manquante au lieu d'inventer) ; seuils des contrats = hypothèses de l'équipe, y compris ceux déduits pour « Mon profil » ; portefeuilles achetés et conservés, sans rééquilibrage ni frais ; un placement isolé est évalué, sans tenir compte du reste du portefeuille de la personne.
+Une seule période historique (le passé ne prédit pas l'avenir) ; biais du survivant (actifs choisis en 2026) ; aucune donnée ESG fournie (le système signale l'information manquante au lieu d'inventer) ; seuils des contrats = hypothèses de l'équipe, y compris ceux déduits pour « Mon profil » ; portefeuilles achetés et conservés, sans rééquilibrage ni frais ; un placement isolé est évalué, sans tenir compte du reste du portefeuille de la personne ; pour un portefeuille qui mélange crypto et actions (ex. 85 % SPY + 15 % BTC, aucun scénario de démo), la volatilité est annualisée sur 252 jours et donc sous-estimée (14,6 % au lieu de 17,6 % dans cet exemple), correctif identifié et reporté après le datathon ; les pourcentages sont arrondis à l'unité, si bien qu'une valeur juste au-delà d'une limite peut s'afficher égale à celle-ci (XBB : −15,48 % affiché « −15 % » pour une limite de −15 %), le verdict « À surveiller » restant calculé sur la valeur exacte.
 
 ## Transparence
 
